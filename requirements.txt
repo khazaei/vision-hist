@@ -1,0 +1,5 @@
+# torch and torchvision version chosen so that it matches with the cuda drivers installed on bolt (11.4)
+torch==2.1.1
+torchvision==0.16.1
+matplotlib
+numpy
