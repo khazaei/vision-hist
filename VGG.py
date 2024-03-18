@@ -12,6 +12,7 @@ IMAGE_DIM = 224
 LEARNING_RATE_DECAY_FACTOR = 0.1  # paper uses 0.1
 LEARNING_RATE_DECAY_STEP_SIZE = 30  # in the paper they decay it 3 times
 
+# unused because of the adamW optimizer that's used.
 WEIGHT_DECAY = 0.1
 
 

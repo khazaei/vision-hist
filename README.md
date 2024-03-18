@@ -11,74 +11,69 @@ architectures we'll be exploring are:
 * MobileNet
 * VisionTransformer
 
-A side note on the training data. All the papers used the ImageNet dataset for training and performance metrics.
-I use Imagenette as the data set to evaluate the different
-architectures. Imagenette is a subset of 10 easily classified
-classes from Imagenet (tench, English springer, cassette player, chain saw, church, French horn, garbage truck, gas
-pump, golf ball, parachute). Its smaller, so easier to store, and it takes less time to train.
+A side note on the training data: All the papers used the ImageNet dataset for training and performance metrics. I use
+Imagenette as the dataset to evaluate the different architectures. Imagenette is a subset of 10 easily classified
+classes from ImageNet (tench, English springer, cassette player, chainsaw, church, French horn, garbage truck, gas pump,
+golf ball, parachute). It's smaller, making it easier to store, and it takes less time to train.
 
 ## AlexNet
 
 The first architecture we will explore is AlexNet. This was the architecture introduced in 2012, which made waves when
-it
-achieved a top 5 error of 15.3%, 10% lower than its runner-up in the ImagNet competitions. Let's go over some key
-contributions of this paper.
+it achieved a top 5 error rate of 15.3%, 10% lower than its runner-up in the ImageNet competitions. Let's go over some
+key contributions of this paper.
 
 ### Architecture
 
-The network consists of 5 convolutional layer followed by 3 fully connected layers. For the full details of the
+The network consists of 5 convolutional layers followed by 3 fully connected layers. For the full details of the
 parameters, check out the code, but here is a condensed view of what it looks like:
 
 (Conv->ReLU->LocalNorm->MaxPool) x 2 -> (Conv->ReLU) x 3 -> MaxPool -> (Linear->ReLU) x 3.
 
-### ReLU activation function.
+### ReLU Activation Function.
 
-Traditionally neural networks used sigmoid or tanh activation functions. AlexNet uses ReLU as its activation function.
-The figure below shows the 3 different
-activation function and their derivatives
+Traditionally, neural networks used sigmoid or tanh activation functions. AlexNet uses ReLU as its activation function.
+The figure below shows the 3 different activation functions and their derivatives:
 
 ![](/Users/hamid/PycharmProjects/vision-hist/assets/act-func.png)
 
 ![](/Users/hamid/PycharmProjects/vision-hist/assets/grad-act-func.png)
 
-As you can see the gradients for ReLU is non saturation for high values when compared to tanh and sigmoid. This helps
-with the vanishing gradient problem
-experienced during backpropagation when training networks. This effect is more prominent in deeper networks, hence ReLU
-allows training deep CNNs.
+As you can see, the gradients for ReLU do not saturate for high values when compared to tanh and sigmoid. This helps
+with the vanishing gradient problem experienced during backpropagation when training networks. This effect is more
+prominent in deeper networks; hence ReLU allows training deep CNNs.
 
-Another feature of ReLU is that its very computationally simple compared to tanh and sigmoid. Its a `max(0, x)`
-operation, and the gradient is a
-thresholding operation.
+Another feature of ReLU is its computational simplicity compared to tanh and sigmoid. It's a `max(0, x)` operation, and
+the gradient is a thresholding operation.
 
-These characteristic lend to faster training of deeper neural networks, which has lead to better performance.
+These characteristics lend to faster training of deeper neural networks, leading to better performance.
 
 ### GPUs
 
 AlexNet was one of the first networks to use multiple GPUs for training. The neurons in each layer were split across two
-GPUs. The GPUs only communicate at certain layers
-This enabled larger datasets and faster training time.
+GPUs. The GPUs only communicate at certain layers. This enabled larger datasets and faster training times.
 
 ### Generalization
 
-Here are some of the techniques they used for generalization.
+Here are some of the techniques they used for generalization:
 
 1 - Data augmentation: They augmented the dataset by generating new images through horizontal reflection, image
-translation and altering intensity of RGB values.
+translation, and altering the intensity of RGB values.
 
-2 - They deployed dropout regularization by randomly zeroing out 50% of the neurons in the fully connected network
+2 - Drop out regularization: They deployed dropout regularization by randomly zeroing out 50% of the neurons in the
+fully connected network
 during training.
 
-3 - Local response normalization. Each pixel (x,y location) for each layer, is normalized by the sum of all kernel
-values at that pixel location within that layer.
+3 - Local response normalization: Each pixel (x,y location) for each layer is normalized by the sum of all kernel values
+at that pixel location within that layer.
 
 ### Optimizer
 
 The optimizer they used was SGD with momentum and weight decay. SGD uses a subset (batch) of the dataset to compute the
-gradient. This makes the gradient computation a bit noisy as compared to using the whole dataset. This helps with
-generalization by exploring more of the cost function, and helps escape local minima and saddle points. Momentum uses
-infinite smoothing, or iir filtering, to make the trajectory and the gradient decent algorithm more "smooth". Weight
-decay is another way saying l2 regularization. l2 regularization helps with over fitting by keeping the weights small,
-and hence stopping any one path from dominating the prediction.
+gradient. This makes the gradient computation a bit noisy compared to using the whole dataset. This helps with
+generalization by exploring more of the cost function and helps escape local minima and saddle points. Momentum uses
+infinite smoothing or IIR filtering to make the trajectory and the gradient descent algorithm smoother. Weight decay is
+another way of saying L2 regularization. L2 regularization helps with overfitting by keeping the weights small, hence
+preventing any one path from dominating the prediction.
 
 ### Implementation and Results.
 
@@ -95,8 +90,8 @@ WEIGHT_DECAY = 0.1
 ```
 
 The SGD optimizer mentioned above didn't train. I used an AdamW optimizer which scales the gradient by the RMS value
-before the update. Using this optimizer and the hyperparameters I was able to get a 99.9% accuracy on the training data,
-and a 65% accuracy on the test data.
+before the update. Using this optimizer and the hyperparameters, I was able to achieve a 99.9% accuracy on the training
+data and a 65% accuracy on the test data.
 
 ```
 Epoch: 90 	Step: 13270 	Loss: 0.0057 	Acc: 100.0 %
@@ -115,15 +110,69 @@ let me know if you can achieve better performance by changing the hyperparameter
 
 ## VGG
 
-VGG was introduced in 2014 and its main contribution was increasing the number of layers. different configurations were
-introduced including a 16 layer network and a 19 layer network. In addition, the receptive field was reduced by making
-use of smaller convolutional filters. The intuition being that the large depth of the cnn allows one to reduce the
-feature vectors at a smaller pace.
+VGG was introduced in 2014 and its main contribution was increasing the number of layers. There was a theory that deeper
+networks were more performant, however deep networks were difficult to train. Better aiml techniques and GPU support
+provided the opportunity of training deeper networks. VGG introduced different configurations including a 16 layer
+network and a 19 layer network.
 
-Network architecture:
+### Network architecture:
+
+VGG16 network consists of 13 convolutional layers followed by 3 fully connected layers. For the full details of the
+parameters, check out the code, but here is a condensed view of what it looks like:
 
 * (Conv->ReLU->LocalNorm->MaxPool) x 2 -> (Conv->ReLU) x 3 -> MaxPool -> (Linear->ReLU) x 3
-* 4 GPUs used for data parallelism. split each batch of training across GPUs. Batch gradients are computed and averaged
-  to obtain gradients of the full batch.
-* Glorot initialization.
+
+### GPUs
+
+AlexNet split the neurons across the GPUs. This led to some inefficiencies as certain neurons could
+only communicate with neurons on the same GPU. In the VGG paper they used the multiple GPUS for data parallelism. They
+split each batch of training data across GPUs. Batch gradients on each GPU are computed and averaged
+to obtain gradients of the full batch.
+
+### Weight Initialization
+
+To initialize the network, the authors pretrained a shallower network, and then used these weights to initialize the
+deep networks. This helped training convergence. Later on the authors mentioned that Glorot initialization, without
+pretraining resulted in the same performance. Glorot initialization takes into accounts the fan in and scaled the
+weights which reduces saturation during backprop and forward pass.
+
+### Small filters
+
+The receptive field of the CNN was reduced by employing smaller convolutional filters. Most the filters in the network
+are 3x3. The intuition behind smaller filters in a deeper network was that the pace at which the feature dimensionality
+was reduced was done at a slower pace. This allowed for the network to learn a rich set of features for image
+classification task.
+
+### Implementation and Results.
+
+The hyperparameters for training are the below:
+
+```
+LEARNING_RATE = 0.0001
+NUM_EPOCHS = 90
+BATCH_SIZE = 128
+IMAGE_DIM = 224
+LEARNING_RATE_DECAY_FACTOR = 0.1
+LEARNING_RATE_DECAY_STEP_SIZE = 30
+WEIGHT_DECAY = 0.1
+```
+
+I was able to get the training loss very low, but it didnt generalize well for the test data. 68.5% accuracy on test
+data. Contact me if your able to achieve better results.
+
+```
+Epoch: 90 	Step: 6590 	Loss: 0.0001 	Acc: 100.0 %
+Epoch: 90 	Step: 6600 	Loss: 0.0006 	Acc: 100.0 %
+Epoch: 90 	Step: 6610 	Loss: 0.0006 	Acc: 100.0 %
+Epoch: 90 	Step: 6620 	Loss: 0.0013 	Acc: 100.0 %
+Epoch: 90 	Step: 6630 	Loss: 0.0010 	Acc: 100.0 %
+Epoch: 90 	Step: 6640 	Loss: 0.0001 	Acc: 100.0 %
+Epoch: 90 	Step: 6650 	Loss: 0.0000 	Acc: 100.0 %
+Epoch: 90 	Step: 6660 	Loss: 0.0001 	Acc: 100.0 %
+Accuracy of the network on the 10000 test images: 68.73885345458984 %
+training complete
+testing on cuda
+Accuracy of the network on the 10000 test images: 68.53502655029297 %
+```
+
 
