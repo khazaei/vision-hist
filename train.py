@@ -1,5 +1,7 @@
 import torch
 
+DEVICE_IDS = [0, 1]
+
 
 def train(model, dataloader):
     optimizer = model.optimizer()

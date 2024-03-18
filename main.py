@@ -1,4 +1,5 @@
 import AlexNet
+import VGG
 import train
 import pytorch_dataset
 import torchvision.transforms as transforms
@@ -11,7 +12,7 @@ NUM_CLASSES = 10
 
 
 def main():
-    model = AlexNet.AlexNet(num_classes=NUM_CLASSES)
+    model = VGG.VGG(num_classes=NUM_CLASSES)
     print('model created')
     print(model)
 
