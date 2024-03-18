@@ -7,8 +7,11 @@ import torch.nn as nn
 
 LEARNING_RATE = 0.0001
 NUM_EPOCHS = 90
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 IMAGE_DIM = 227
+LEARNING_RATE_DECAY_FACTOR = 0.1
+LEARNING_RATE_DECAY_STEP_SIZE = 30  # in paper they decay it 3 times
+WEIGHT_DECAY = 0.1
 
 
 class AlexNet(nn.Module):
@@ -44,14 +47,19 @@ class AlexNet(nn.Module):
             nn.ReLU(),
             nn.Linear(in_features=4096, out_features=num_classes),
         )
-        self.init_bias()
 
-        self.optim = torch.optim.AdamW(params=self.parameters(), lr=LEARNING_RATE)
+        print("creating AlexNet")
+        print(
+            "learning rate {}, weight decay {}, batch size {}, learning rate decay {}, learning rate scheduler step {}".format(
+                LEARNING_RATE, WEIGHT_DECAY, BATCH_SIZE, LEARNING_RATE_DECAY_FACTOR, LEARNING_RATE_DECAY_STEP_SIZE))
+
+        self.init_params()
+        self.optim = torch.optim.AdamW(params=self.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
         self.num_epochs = NUM_EPOCHS
         self.batch_size = BATCH_SIZE
         self.in_dim = IMAGE_DIM
 
-    def init_bias(self):
+    def init_params(self):
         for layer in self.conv:
             if isinstance(layer, nn.Conv2d):
                 nn.init.normal_(layer.weight, mean=0, std=0.01)
@@ -72,5 +80,5 @@ class AlexNet(nn.Module):
         return self.optim
 
     def lr_scheduler(self):
-        return torch.optim.lr_scheduler.StepLR(self.optim, step_size=30, gamma=0.1)
-
+        return torch.optim.lr_scheduler.StepLR(self.optim, step_size=LEARNING_RATE_DECAY_STEP_SIZE,
+                                               gamma=LEARNING_RATE_DECAY_FACTOR)
