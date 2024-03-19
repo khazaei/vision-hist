@@ -34,9 +34,9 @@ parameters, check out the code, but here is a condensed view of what it looks li
 Traditionally, neural networks used sigmoid or tanh activation functions. AlexNet uses ReLU as its activation function.
 The figure below shows the 3 different activation functions and their derivatives:
 
-![](/Users/hamid/PycharmProjects/vision-hist/assets/act-func.png)
+![](./assets/act-func.png)
 
-![](/Users/hamid/PycharmProjects/vision-hist/assets/grad-act-func.png)
+![](./assets/grad-act-func.png)
 
 As you can see, the gradients for ReLU do not saturate for high values when compared to tanh and sigmoid. This helps
 with the vanishing gradient problem experienced during backpropagation when training networks. This effect is more
