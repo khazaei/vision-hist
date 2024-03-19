@@ -1,9 +1,12 @@
 # vision-hist
 
-A stroll down memory lane: In this series, I'm going to explore the progression of vision neural network architectures
-through time. I've selected a few architectures that were groundbreaking for their era. I'll be dissecting their papers,
-highlighting the novelty introduced in each architecture, and providing some intuition behind each change. The
-architectures we'll be exploring are:
+A stroll down memory lane: When I first came across the transformer architecture I was amazed how such a concept came
+into existence. Then I was reminded such innovations are the result of progressive and iterative processes, built upon
+years of accumulated knowledge. To get a good understanding on the rationale behind specific engineering decisions its
+always good to look back in history. In this series, I will delve into the evolution of vision neural network
+architectures over time. I've selected a few architectures that were groundbreaking for their era, and I'll be
+dissecting their papers, highlighting the novelty introduced in each architecture, and providing some intuition behind
+each change. The architectures we will explore are:
 
 * AlexNet
 * VGG
@@ -11,7 +14,7 @@ architectures we'll be exploring are:
 * MobileNet
 * Vision Transformers
 
-A side note on the training data: All the papers used the ImageNet dataset for training and validation I use
+A side note on the training data: All the papers used the ImageNet dataset for training and validation. I use
 Imagenette as the dataset to evaluate the different architectures. Imagenette is a subset of 10 easily classified
 classes from ImageNet (tench, English springer, cassette player, chainsaw, church, French horn, garbage truck, gas pump,
 golf ball, parachute). It's smaller, making it easier to store, and it takes less time to train.
