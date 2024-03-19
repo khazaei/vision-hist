@@ -29,7 +29,7 @@ parameters, check out the code, but here is a condensed view of what it looks li
 
 (Conv->ReLU->LocalNorm->MaxPool) x 2 -> (Conv->ReLU) x 3 -> MaxPool -> (Linear->ReLU) x 3.
 
-### ReLU Activation Function.
+### ReLU Activation Function
 
 Traditionally, neural networks used sigmoid or tanh activation functions. AlexNet uses ReLU as its activation function.
 The figure below shows the 3 different activation functions and their derivatives:
@@ -75,7 +75,7 @@ infinite smoothing or IIR filtering to make the trajectory and the gradient desc
 another way of saying L2 regularization. L2 regularization helps with overfitting by keeping the weights small, hence
 preventing any one path from dominating the prediction.
 
-### Implementation and Results.
+### Implementation and Results
 
 These are the hyperparameters used for training:
 
@@ -115,7 +115,7 @@ deeper networks were more performant; however, deep networks were difficult to t
 support provided the opportunity to train deeper networks. VGG introduced different configurations, including a 16-layer
 network and a 19-layer network.
 
-### Network architecture:
+### Network Architecture
 
 VGG16 network consists of 13 convolutional layers followed by 3 fully connected layers. For the full details of the
 parameters, check out the code, but here is a condensed view of what it looks like:
@@ -135,14 +135,14 @@ deeper networks. This helped training convergence. Later on, the authors mention
 pretraining, resulted in the same performance. Glorot initialization takes into account the fan-in and scales the
 weights, which reduces saturation during backpropagation and forward pass.
 
-### Small filters
+### Small Filters
 
 The receptive field of the CNN was reduced by employing smaller convolutional filters. Most of the filters in the
 network are 3x3. The intuition behind smaller filters in a deeper network was that the pace at which the feature
 dimensionality was reduced was done at a slower pace. This allowed for the network to learn a rich set of features for
 the image classification task.
 
-### Implementation and Results.
+### Implementation and Results
 
 The hyperparameters for training are as follows:
 
