@@ -9,9 +9,9 @@ architectures we'll be exploring are:
 * VGG
 * ResNet
 * MobileNet
-* VisionTransformer
+* Vision Transformers
 
-A side note on the training data: All the papers used the ImageNet dataset for training and performance metrics. I use
+A side note on the training data: All the papers used the ImageNet dataset for training and validation I use
 Imagenette as the dataset to evaluate the different architectures. Imagenette is a subset of 10 easily classified
 classes from ImageNet (tench, English springer, cassette player, chainsaw, church, French horn, garbage truck, gas pump,
 golf ball, parachute). It's smaller, making it easier to store, and it takes less time to train.
@@ -110,42 +110,41 @@ let me know if you can achieve better performance by changing the hyperparameter
 
 ## VGG
 
-VGG was introduced in 2014 and its main contribution was increasing the number of layers. There was a theory that deeper
-networks were more performant, however deep networks were difficult to train. Better aiml techniques and GPU support
-provided the opportunity of training deeper networks. VGG introduced different configurations including a 16 layer
-network and a 19 layer network.
+VGG was introduced in 2014, and its main contribution was increasing the number of layers. There was a theory that
+deeper networks were more performant; however, deep networks were difficult to train. Better AIML techniques and GPU
+support provided the opportunity to train deeper networks. VGG introduced different configurations, including a 16-layer
+network and a 19-layer network.
 
 ### Network architecture:
 
 VGG16 network consists of 13 convolutional layers followed by 3 fully connected layers. For the full details of the
 parameters, check out the code, but here is a condensed view of what it looks like:
 
-* (Conv->ReLU->LocalNorm->MaxPool) x 2 -> (Conv->ReLU) x 3 -> MaxPool -> (Linear->ReLU) x 3
+(Conv->ReLU->LocalNorm->MaxPool) x 2 -> (Conv->ReLU) x 3 -> MaxPool -> (Linear->ReLU) x 3
 
 ### GPUs
 
-AlexNet split the neurons across the GPUs. This led to some inefficiencies as certain neurons could
-only communicate with neurons on the same GPU. In the VGG paper they used the multiple GPUS for data parallelism. They
-split each batch of training data across GPUs. Batch gradients on each GPU are computed and averaged
-to obtain gradients of the full batch.
+AlexNet split the neurons across the GPUs. This led to some inefficiencies as certain neurons could only communicate
+with neurons on the same GPU. In the VGG paper, they used multiple GPUs for data parallelism. They split each batch of
+training data across GPUs. Batch gradients on each GPU are computed and averaged to obtain gradients of the full batch.
 
 ### Weight Initialization
 
 To initialize the network, the authors pretrained a shallower network, and then used these weights to initialize the
-deep networks. This helped training convergence. Later on the authors mentioned that Glorot initialization, without
-pretraining resulted in the same performance. Glorot initialization takes into accounts the fan in and scaled the
-weights which reduces saturation during backprop and forward pass.
+deeper networks. This helped training convergence. Later on, the authors mentioned that Glorot initialization, without
+pretraining, resulted in the same performance. Glorot initialization takes into account the fan-in and scales the
+weights, which reduces saturation during backpropagation and forward pass.
 
 ### Small filters
 
-The receptive field of the CNN was reduced by employing smaller convolutional filters. Most the filters in the network
-are 3x3. The intuition behind smaller filters in a deeper network was that the pace at which the feature dimensionality
-was reduced was done at a slower pace. This allowed for the network to learn a rich set of features for image
-classification task.
+The receptive field of the CNN was reduced by employing smaller convolutional filters. Most of the filters in the
+network are 3x3. The intuition behind smaller filters in a deeper network was that the pace at which the feature
+dimensionality was reduced was done at a slower pace. This allowed for the network to learn a rich set of features for
+the image classification task.
 
 ### Implementation and Results.
 
-The hyperparameters for training are the below:
+The hyperparameters for training are as follows:
 
 ```
 LEARNING_RATE = 0.0001
@@ -157,8 +156,8 @@ LEARNING_RATE_DECAY_STEP_SIZE = 30
 WEIGHT_DECAY = 0.1
 ```
 
-I was able to get the training loss very low, but it didnt generalize well for the test data. 68.5% accuracy on test
-data. Contact me if your able to achieve better results.
+I was able to get the training loss very low, but it didn't generalize well for the test data. Achieving only 68.5%
+accuracy on the test data. Contact me if you're able to achieve better results.
 
 ```
 Epoch: 90 	Step: 6590 	Loss: 0.0001 	Acc: 100.0 %
