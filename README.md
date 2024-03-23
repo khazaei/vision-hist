@@ -272,6 +272,10 @@ deeper networks. This helped training convergence. Later on, the authors mention
 pretraining, resulted in the same performance. Glorot initialization takes into account the fan-in and scales the
 weights, which reduces saturation during backpropagation and forward pass.
 
+```python
+nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu')
+```
+
 ### Small Filters
 
 The receptive field of the CNN was reduced by employing smaller convolutional filters. Most of the filters in the

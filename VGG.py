@@ -13,6 +13,7 @@ LEARNING_RATE_DECAY_FACTOR = 0.1  # paper uses 0.1
 LEARNING_RATE_DECAY_STEP_SIZE = 2000  # in the paper they decay it 3 times
 WEIGHT_DECAY = 0.01
 
+
 class VGG(nn.Module):
     def __init__(self, num_classes=1000):
         super().__init__()

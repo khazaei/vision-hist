@@ -5,13 +5,13 @@ https://arxiv.org/pdf/1409.1556.pdf
 import torch
 import torch.nn as nn
 
-LEARNING_RATE = 0.0001
-NUM_EPOCHS = 90
-BATCH_SIZE = 128
+LEARNING_RATE = 1e-4
+NUM_EPOCHS = 200
+BATCH_SIZE = 256
 IMAGE_DIM = 224
 LEARNING_RATE_DECAY_FACTOR = 0.1
-LEARNING_RATE_DECAY_STEP_SIZE = 30
-WEIGHT_DECAY = 0.1
+LEARNING_RATE_DECAY_STEP_SIZE = 1000
+WEIGHT_DECAY = 1e-2
 
 
 class ResidualBlock(nn.Module):
@@ -54,7 +54,7 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(ResidualBlock, 256, layers[2], stride=2)
         self.layer3 = self._make_layer(ResidualBlock, 512, layers[3], stride=2)
         self.avgpool = nn.AvgPool2d(7, stride=1)
-        self.fc = nn.Linear(512, num_classes)
+        self.fc = nn.Sequential(nn.Linear(512, num_classes))
 
         print(
             "learning rate {}, weight decay {}, batch size {}, learning rate decay {}, learning rate scheduler step {}".format(
@@ -88,10 +88,10 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-        # for layer in self.fc:
-        #     if isinstance(layer, nn.Linear):
-        #         nn.init.normal_(layer.weight, 0, 0.01)
-        #         nn.init.constant_(layer.bias, 0)
+        for layer in self.fc:
+            if isinstance(layer, nn.Linear):
+                nn.init.normal_(layer.weight, 0, 0.01)
+                nn.init.constant_(layer.bias, 0)
 
     def forward(self, x):
         x = self.conv1(x)

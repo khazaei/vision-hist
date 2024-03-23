@@ -13,6 +13,7 @@ LEARNING_RATE_DECAY_FACTOR = 0.1
 LEARNING_RATE_DECAY_STEP_SIZE = 500  # in paper they decay it 3 times
 WEIGHT_DECAY = 0.01
 
+
 class AlexNet(nn.Module):
     def __init__(self, num_classes=1000):
         super().__init__()
