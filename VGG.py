@@ -6,18 +6,12 @@ import torch
 import torch.nn as nn
 
 LEARNING_RATE = 0.0001  # paper uses 0.01
-NUM_EPOCHS = 90  # paper uses 74
-BATCH_SIZE = 128  # paper uses 256
+NUM_EPOCHS = 200  # paper uses 74
+BATCH_SIZE = 256  # paper uses 256
 IMAGE_DIM = 224
 LEARNING_RATE_DECAY_FACTOR = 0.1  # paper uses 0.1
-LEARNING_RATE_DECAY_STEP_SIZE = 30  # in the paper they decay it 3 times
-
-# unused because of the adamW optimizer that's used.
-WEIGHT_DECAY = 0.1
-
-
-# doesn't seem VGG normalizes the data, can remove that??
-
+LEARNING_RATE_DECAY_STEP_SIZE = 2000  # in the paper they decay it 3 times
+WEIGHT_DECAY = 0.01
 
 class VGG(nn.Module):
     def __init__(self, num_classes=1000):
@@ -26,47 +20,34 @@ class VGG(nn.Module):
 
         self.conv = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),  # layer 1
-            # nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),  # layer 2
-            # nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),  # layer 3
-            # nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # layer 4
-            # nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),  # layer 5
-            # nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),  # layer 6
-            # nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),  # layer 7
-            # nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),  # layer 8
-            # nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),  # layer 9
-            # nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),  # layer 10
-            # nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),  # layer 11
-            # nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),  # layer 12
-            # nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),  # layer 13
-            # nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
         )
@@ -98,12 +79,6 @@ class VGG(nn.Module):
             if isinstance(layer, nn.Conv2d):
                 nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu'))
                 nn.init.constant_(layer.bias, 0)
-            # if isinstance(layer, nn.Conv2d):
-            #     nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
-            #     nn.init.constant_(layer.bias, 0)
-            # elif isinstance(layer, nn.BatchNorm2d):
-            #     nn.init.constant_(layer.weight, 1)
-            #     nn.init.constant_(layer.bias, 0)
 
         for layer in self.fc:
             if isinstance(layer, nn.Linear):
