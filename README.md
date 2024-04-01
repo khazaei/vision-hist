@@ -11,8 +11,8 @@ each change. The architectures we will explore are:
 * AlexNet
 * VGG
 * ResNet
-* MobileNet
-* Vision Transformers
+* MobileNet (in progress)
+* Vision Transformers (in progress)
 
 A side note on the training data: All the papers used the ImageNet dataset for training and validation. I use
 Imagenette as the dataset to evaluate the different architectures. Imagenette is a subset of 10 easily classified
