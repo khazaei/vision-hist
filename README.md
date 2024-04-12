@@ -11,7 +11,6 @@ each change. The architectures we will explore are:
 * AlexNet
 * VGG
 * ResNet
-* MobileNet
 * Vision Transformers
 
 A side note on the training data: All the papers used the ImageNet dataset for training and validation. I use
@@ -91,7 +90,7 @@ These characteristics lend to faster training of deeper neural networks, leading
 AlexNet was one of the first networks to use multiple GPUs for training. The neurons in each layer were split across two
 GPUs. The GPUs only communicate at certain layers. This enabled larger datasets and faster training times.
 
-You can easily train and test on GPUs by moving the model and data to GPU.
+You can easily train and test on GPUs in pytorch by moving the model and data to GPU.
 
 ```python
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -170,8 +169,7 @@ WEIGHT_DECAY = 0.01
 ```
 
 The SGD optimizer mentioned above didn't train. I used an AdamW optimizer which scales the gradient by the RMS value
-before the update. Using this optimizer and the hyperparameters, I was able to achieve a 96% accuracy on the training
-data and a 78% accuracy on the test data.
+before the update. Using this optimizer and the hyperparameters, I was able to achieve a 78% accuracy on the test data.
 
 ```
 Epoch: 400 	Step: 14770 	Loss: 0.2250 	Acc: 93.75 %
@@ -305,22 +303,53 @@ LEARNING_RATE_DECAY_STEP_SIZE = 2000
 WEIGHT_DECAY = 0.01
 ```
 
-I was able to achieve an 88.2% accuracy on the test data. This is a 10% improvement over AlexNet.
+I was able to achieve an 85.7% accuracy on the test data. This is a 8% improvement over AlexNet.
 
 ```
-Epoch: 200 	Step: 7370 	Loss: 0.1606 	Acc: 95.3125 %
-Epoch: 200 	Step: 7380 	Loss: 0.1764 	Acc: 94.140625 %
-Epoch: 200 	Step: 7390 	Loss: 0.1848 	Acc: 93.75 %
-Epoch: 200 	Step: 7400 	Loss: 0.1606 	Acc: 95.65217590332031 %
-Accuracy of the network on the 10000 test images: 87.84712982177734 %
+Epoch: 200 	Step: 7370 	Loss: 0.2355 	Acc: 94.140625 %
+Epoch: 200 	Step: 7380 	Loss: 0.2629 	Acc: 91.40625 %
+Epoch: 200 	Step: 7390 	Loss: 0.1777 	Acc: 92.578125 %
+Epoch: 200 	Step: 7400 	Loss: 0.2086 	Acc: 94.07115173339844 %
+Accuracy of the network on the 10000 test images: 86.08916473388672 %
 training complete
 testing on cuda
-Accuracy of the network on the 10000 test images: 88.22929382324219 %
+Accuracy of the network on the 10000 test images: 85.73248291015625 %
 ```
 
 ## ResNet
 
+After VGG showed promising results, it was understood that deeper networks provide better performance. However, deeper
+networks were harder to train and suffered from vanishing gradient or exploding gradient problem. Batch normalization
+and proper initialization of the weights did help in that regard, however, the solvers were still having convergence
+issues, and the deeps networks weren't as performant. The solution in ResNet was to introduce skip connections or
+residual connections that pass the input to the output. The structure is shown in the figure below. This residual
+connection, enabled optimizers to converge, and allowed deeper CNNs. This allowed ResNet to have 8 times the depth of a
+VGG, yet have fewer parameters.
+
+![](./assets/ResNet-architecture.png)
+
+### Batch Norm
+
+Batch normalization is a technique used in training neural networks that helps to improve the training speed,
+performance, and stability of the model. It was introduced by Sergey Ioffe and Christian Szegedy in 2015 in their
+paper "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift." Batch
+normalization, or Batch norm, normalizes the inputs of each layer within a network during training. The goal is to
+ensure that the inputs to a layer are more standardized, which helps the network learn more effectively. It does this by
+first removing the sample mean, and then normalizing by the sample variance for the batch. It then introduces two
+learnable parameters for the network to scale and shift the samples. A moving average of the mean and variance is
+tracked during training, to be used at inference time.
+
+Some limitations of batch normalization is its sensitivity to the batch size, as the normalization statistics are
+computed over the batch. The other issue is the discrepancies in model behavior between
+training and inference. During training normalization is done on the batch statistics, however, at inference time these
+batch statistics are replaced with the moving averages.
+
 ### Network Architecture
+
+ResNet is composed of multiple residual blocks of varying output channel sizes. Each residual block is composed of two
+convolution layers followed by batch norms with a residual connection at the output. There is a total of 16 blocks, plus
+a single convolution layer at the beginning and a fully connected layer at the end, resulting in 36 layers and 21
+million parameters.
 
 ```
 ----------------------------------------------------------------
@@ -462,9 +491,9 @@ Estimated Total Size (MB): 178.10
 ----------------------------------------------------------------
 ```
 
-
-
 ### Implementation and Results
+
+The hyperparameters for training are as follows:
 
 ```python
 LEARNING_RATE = 1e-4
@@ -476,6 +505,8 @@ LEARNING_RATE_DECAY_STEP_SIZE = 1000
 WEIGHT_DECAY = 1e-2
 ```
 
+I was able to achieve an 86.6% accuracy on the test data. This is a very slight improvement over VGG16 (less than 1%),
+however, ResNet has 6x fewer parameters than VGG16. 
 
 ```
 Epoch: 200 	Step: 7370 	Loss: 0.1519 	Acc: 95.3125 %
