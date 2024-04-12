@@ -25,7 +25,6 @@ class ResidualBlock(nn.Module):
             nn.BatchNorm2d(out_channels))
         self.downsample = downsample
         self.relu = nn.ReLU()
-        self.out_channels = out_channels
 
     def forward(self, x):
         residual = x
@@ -43,16 +42,15 @@ class ResNet(nn.Module):
 
         layers = [3, 4, 6, 3]
         print("creating ResNet")
-        self.inplanes = 64
         self.conv1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
             nn.BatchNorm2d(64),
             nn.ReLU())
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer0 = self._make_layer(ResidualBlock, 64, layers[0], stride=1)
-        self.layer1 = self._make_layer(ResidualBlock, 128, layers[1], stride=2)
-        self.layer2 = self._make_layer(ResidualBlock, 256, layers[2], stride=2)
-        self.layer3 = self._make_layer(ResidualBlock, 512, layers[3], stride=2)
+        self.layer0 = self._make_layer(ResidualBlock, 64, 64, layers[0], stride=1)
+        self.layer1 = self._make_layer(ResidualBlock, 64, 128, layers[1], stride=2)
+        self.layer2 = self._make_layer(ResidualBlock, 128, 256, layers[2], stride=2)
+        self.layer3 = self._make_layer(ResidualBlock, 256, 512, layers[3], stride=2)
         self.avgpool = nn.AvgPool2d(7, stride=1)
         self.fc = nn.Sequential(nn.Linear(512, num_classes))
 
@@ -65,18 +63,17 @@ class ResNet(nn.Module):
         self.batch_size = BATCH_SIZE
         self.in_dim = IMAGE_DIM
 
-    def _make_layer(self, block, planes, blocks, stride=1):
+    def _make_layer(self, block_type, in_channel, out_channel, num_blocks, stride=1):
         downsample = None
-        if stride != 1 or self.inplanes != planes:
+        if stride != 1 or in_channel != out_channel:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes, kernel_size=1, stride=stride),
-                nn.BatchNorm2d(planes),
+                nn.Conv2d(in_channel, out_channel, kernel_size=1, stride=stride),
+                nn.BatchNorm2d(out_channel),
             )
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
-        self.inplanes = planes
-        for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
+        layers.append(block_type(in_channel, out_channel, stride, downsample))
+        for i in range(1, num_blocks):
+            layers.append(block_type(out_channel, out_channel))
 
         return nn.Sequential(*layers)
 

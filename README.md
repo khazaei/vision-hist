@@ -1,7 +1,8 @@
 # vision-hist
 
-A stroll down memory lane: When I first came across the transformer architecture I was amazed how such a concept came
-into existence. Then I was reminded such innovations are the result of progressive and iterative processes, built upon
+A stroll down memory lane: When I first came across the transformer architecture I was impressed by the engineering
+involved, and asked myself how on earth did anyone come up with this? After digging in a bit, I realized this wasn't
+something that was discovered overnight. It was a result of progressive and iterative processes, built upon
 years of accumulated knowledge. To get a good understanding on the rationale behind specific engineering decisions its
 always good to look back in history. In this series, I will delve into the evolution of vision neural network
 architectures over time. I've selected a few architectures that were groundbreaking for their era, and I'll be
@@ -506,7 +507,7 @@ WEIGHT_DECAY = 1e-2
 ```
 
 I was able to achieve an 86.6% accuracy on the test data. This is a very slight improvement over VGG16 (less than 1%),
-however, ResNet has 6x fewer parameters than VGG16. 
+however, ResNet has 6x fewer parameters than VGG16.
 
 ```
 Epoch: 200 	Step: 7370 	Loss: 0.1519 	Acc: 95.3125 %
