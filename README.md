@@ -185,16 +185,17 @@ Accuracy of the network on the 10000 test images: 78.01273345947266 %
 
 ## VGG
 
-VGG was introduced in 2014, and its main contribution was increasing the number of layers. It was able to achieve a
-top-5 error rate of 8%. There was a theory that
-deeper networks were more performant; however, deep networks were difficult to train. Better AIML techniques and GPU
-support provided the opportunity to train deeper networks. VGG introduced different configurations, including a 16-layer
-network and a 19-layer network.
+Introduced in "Very Deep Convolutional Networks for Large-Scale Image Recognition - Simonyan, K. et al. (2014)", VGG
+significantly contributed to deep learning by increasing the number of layers in neural networks. It achieved a top-5
+error rate of 8%. At the time, there was a prevailing theory that deeper networks would perform better; however, such
+networks were notoriously difficult to train. Advances in AI/ML techniques and enhanced GPU support eventually made it
+feasible to train deeper networks like VGG. This model came in different configurations, including variants with 16 and
+19 layers.
 
 ### Network Architecture
 
-VGG16 network consists of 13 convolutional layers followed by 3 fully connected layers. For the full details of the
-parameters see below.
+The VGG16 network consists of 13 convolutional layers followed by 3 fully connected layers. For full details on the
+parameters, please see the section below.
 
 ```
 ----------------------------------------------------------------
@@ -250,14 +251,16 @@ Estimated Total Size (MB): 731.64
 ----------------------------------------------------------------
 ```
 
-Comparing to AlexNet, VGG16 has approximately two times more parameters.
+Compared to AlexNet, VGG16 has approximately twice the number of parameters. This increase allows for more complex
+models but also requires more computational resources.
 
 ### GPUs
 
-AlexNet split the neurons across the GPUs. This led to some inefficiencies as certain neurons could only communicate
-with neurons on the same GPU. In the VGG paper, they used multiple GPUs for data parallelism. They split each batch of
-training data across GPUs. Batch gradients on each GPU are computed and averaged to obtain gradients of the full batch.
-To use multiple GPUs for training on pytorch, you can specify the number of devices and use the parallel api.
+AlexNet utilized multiple GPUs by splitting neurons across the devices. This configuration led to inefficiencies since
+certain neurons could only communicate with those on the same GPU. Conversely, in the VGG approach as detailed in their
+paper, multiple GPUs were used for data parallelism. They distributed each training batch across several GPUs. Batch
+gradients computed on each GPU were then averaged together to obtain the gradients for the entire batch. To implement
+multi-GPU training in PyTorch, specify the number of devices and utilize the parallel API provided by the framework.
 
 ```python
 DEVICE_IDS = [0, 1]
@@ -266,13 +269,13 @@ model = torch.nn.parallel.DataParallel(model, device_ids=DEVICE_IDS)
 
 ### Glorot Initialization
 
-To initialize the network, the authors pretrained a shallower network, and then used these weights to initialize the
-deeper networks. This helped training convergence. Later on, the authors mentioned that Glorot initialization, without
-pretraining, resulted in the same performance. Glorot initialization described in "Understanding the difficulty of
-training deep feedforward neural networks - Glorot, X. & Bengio, Y. (2010).", takes into account the fan-in and scales
-the
-weights, which reduces saturation during backpropagation and forward pass. For glorot, also known as xavier
-initialization the weights are drawn from a distribution with its variance scale by the (fan_in + fan_out).
+In their approach, the authors of the network first pretrained a shallower network and then utilized these weights to
+initialize the deeper networks. This strategy facilitated training convergence. Subsequently, the authors noted that
+Glorot initialization, even without pretraining, yielded comparable performance. Glorot initialization, elucidated in "
+Understanding the difficulty of training deep feedforward neural networks" by Glorot and Bengio (2010), takes into
+consideration both fan-in and fan-out to scale the weights appropriately. This scaling mitigates issues related to
+saturation during both backpropagation and the forward pass. In Glorot, also referred to as Xavier initialization, the
+weights are drawn from a distribution whose variance is scaled by the sum of fan-in and fan-out.
 
 ```python
 nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu')
@@ -295,7 +298,7 @@ different configurations (different number of layers) to get better generalizati
 
 ### Implementation and Results
 
-The hyperparameters for training are as follows:
+The hyperparameters used for training were:
 
 ```python
 LEARNING_RATE = 0.0001
@@ -307,7 +310,7 @@ LEARNING_RATE_DECAY_STEP_SIZE = 2000
 WEIGHT_DECAY = 0.01
 ```
 
-I was able to achieve an 85.7% accuracy on the test data. This is a 8% improvement over AlexNet.
+I was able to achieve an 85.7% accuracy on the test data. This is an 8% improvement over AlexNet.
 
 ```
 Epoch: 200 	Step: 7370 	Loss: 0.2355 	Acc: 94.140625 %
@@ -322,37 +325,35 @@ Accuracy of the network on the 10000 test images: 85.73248291015625 %
 
 ## ResNet
 
-After VGG showed promising results, it was understood that deeper networks provide better performance. However, deeper
-networks were harder to train and suffered from vanishing gradient or exploding gradient problem. Batch normalization
-and proper initialization of the weights did help in that regard, however, the solvers were still having convergence
-issues, and the deeps networks weren't as performant. The solution proposed by He et al. in "Deep Residual Learning for
-Image Recognition" was to introduce skip connections or
-residual connections that pass the input to the output. The structure is shown in the figure below. This residual
-connection, enabled optimizers to converge, and allowed deeper CNNs. This allowed ResNet32 to have 8 times the depth of
-a
-VGG16, yet have fewer parameters.
+After VGG showed promising results, it was understood that deeper networks typically provide better performance.
+However, training deeper networks was challenging due to problems like vanishing and exploding gradients. Batch
+normalization and proper initialization of weights helped to some extent; however, solvers were still encountering
+convergence issues, and the deep networks were not performing optimally. The solution, proposed by He et al. in "Deep
+Residual Learning for Image Recognition," was to introduce skip connections, also known as residual connections, that
+pass the input directly to later layers. The structure is shown in the figure below. These residual connections enabled
+optimizers to converge more effectively and allowed for significantly deeper CNNs. As a result, ResNet32 could achieve
+eight times the depth of VGG16, yet have fewer parameters.
 
 ![](./assets/ResNet-architecture.png)
 
 ### Batch Norm
 
-Batch normalization is a technique used in training neural networks that helps to improve the training speed,
-performance, and stability of the model. It was introduced by Sergey Ioffe and Christian Szegedy in 2015 in their
-paper "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift." Batch
-normalization, or Batch norm, normalizes the inputs of each layer within a network during training. The goal is to
-ensure that the inputs to a layer are more standardized, which helps the network learn more effectively. It does this by
-first removing the sample mean, and then normalizing by the sample variance for the batch. It then introduces two
-learnable parameters for the network to scale and shift the samples. A moving average of the mean and variance is
-tracked during training, to be used at inference time.
+Batch normalization is a technique used in training neural networks that improves training speed, performance, and
+stability. Introduced by Sergey Ioffe and Christian Szegedy in 2015 through their paper "Batch Normalization:
+Accelerating Deep Network Training by Reducing Internal Covariate Shift," this method normalizes the inputs of each
+layer within a network during training. The primary goal is to standardize the inputs to a layer, enhancing the
+network's learning efficiency. It achieves this by first subtracting the batch mean and then dividing by the batch
+variance. Additionally, it introduces two learnable parameters to scale and shift the normalized data. During training,
+a moving average of the mean and variance is maintained for use during inference.
 
-Some limitations of batch normalization is its sensitivity to the batch size, as the normalization statistics are
-computed over the batch. The other issue is the discrepancies in model behavior between
-training and inference. During training normalization is done on the batch statistics, however, at inference time these
-batch statistics are replaced with the moving averages.
+However, batch normalization has limitations, including sensitivity to batch size, as normalization relies on batch
+statistics. There are also discrepancies in model behavior between training and inference phases. During training,
+normalization is based on the actual batch statistics, but at inference, these are replaced with the tracked moving
+averages.
 
-The input to batch norm is of shape [B, H, W, C] = [batch, height, width, channel]. The statistics are computed over B,
-H, W, resulting in C values for mean and variance. These C values are used to normalize the samples across the channels,
-resulting in an output of size [B, H, W, C].
+The input to batch normalization is in the shape [B, H, W, C] = [batch, height, width, channel], with statistics
+computed over the dimensions B, H, and W, producing C mean and variance values. These values are used to normalize the
+data across channels, resulting in an output of the same size, [B, H, W, C].
 
 ```python
 nn.BatchNorm2d(out_channels),
@@ -360,12 +361,12 @@ nn.BatchNorm2d(out_channels),
 
 ### He Initialization
 
-He initialization, also known as Kaiming initialization, described in "Delving deep into rectifiers: Surpassing
-human-level performance on ImageNet classification - He, K. et al. (2015)." was designed for networks with ReLU
-activation. As in glorot initialization, the variance of the distribution is scaled by fan in, to keep consistent
-statistics across activations. In addition, the variance is multiplied by two to compensate for the ReLU activation.
-ReLU can potentially create imbalance in the variance of the activations because they push half their output
-to zero. He initialization compensates for this effect.
+He initialization, also known as Kaiming initialization, described in the paper "Delving Deep into Rectifiers:
+Surpassing Human-Level Performance on ImageNet Classification - He, K. et al. (2015)," was specifically designed for
+networks using ReLU activation. Similar to glorot initialization, He initialization scales the variance of the
+distribution based on the fan-in to maintain consistent statistics across activations. Additionally, the variance is
+doubled to compensate for the ReLU activation, which can create an imbalance by pushing half of its outputs to zero.
+This adjustment helps to stabilize the variance of the activations, mitigating the effect of ReLU's zeroing out.
 
 ```python
 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -373,10 +374,10 @@ nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
 
 ### Network Architecture
 
-ResNet is composed of multiple residual blocks of varying output channel sizes. Each residual block is composed of two
-convolution layers followed by batch norms with a residual connection at the output. There is a total of 16 blocks, plus
-a single convolution layer at the beginning and a fully connected layer at the end, resulting in 34 layers and 21
-million parameters.
+ResNet consists of multiple residual blocks, each with varying output channel sizes. Each block includes two convolution
+layers, followed by batch normalization, and features a residual connection at the output. In total, the architecture
+includes 16 residual blocks, plus an initial single convolution layer and a fully connected layer at the end. This
+configuration results in a network with 34 layers and 21 million parameters.
 
 ```
 ----------------------------------------------------------------
@@ -520,7 +521,7 @@ Estimated Total Size (MB): 178.10
 
 ### Implementation and Results
 
-The hyperparameters for training are as follows:
+The hyperparameters used for training were:
 
 ```python
 LEARNING_RATE = 1e-4
@@ -532,8 +533,8 @@ LEARNING_RATE_DECAY_STEP_SIZE = 1000
 WEIGHT_DECAY = 1e-2
 ```
 
-I was able to achieve an 86.6% accuracy on the test data. This is a very slight improvement over VGG16 (less than 1%),
-however, ResNet has 6x fewer parameters than VGG16.
+I achieved an 86.6% accuracy on the test data, which represents a very slight improvement (less than 1%) over VGG16.
+However, it's important to note that ResNet requires 6x fewer parameters than VGG16.
 
 ```
 Epoch: 200 	Step: 7370 	Loss: 0.1519 	Acc: 95.3125 %
@@ -548,122 +549,122 @@ Accuracy of the network on the 10000 test images: 86.64967346191406 %
 
 ## Vision Transformer
 
-We now move on to vision transformers. Transformers made waves when first introduced in "Attention Is All You Need -
-Viswani, A. et al. (2017)"
-and have had significant impact in natural language processing (NLP). The architectures enabled massive parallelism in
-training large corpus of text on multiple GPUs. These models are comprised of billions of parameters and are
-known as large language models. They have showed successful in chatbots, and AI assistants, and are now being used
-in vision applications. We'll fist explore the encoder transformer architecture as used in NLP, and see how it's adapted
-for vision. The architecture is shown below, we will go through each in detail.
+We now move on to vision transformers. Transformers made waves when they were first introduced in "Attention Is All You
+Need - Vaswani, A. et al. (2017)"
+and have had a significant impact in natural language processing (NLP). The architectures enabled massive parallelism in
+training a large corpus of text on multiple GPUs. These models comprise billions of parameters and are
+known as large language models. They have shown success in chatbots and AI assistants, and are now being used
+in vision applications. We'll first explore the encoder transformer architecture as used in NLP and see how it's adapted
+for vision. The architecture is shown below:
 
 ![](./assets/transformer.png)
 
+We will now go into the details.
+
 ### Input Embedding
 
-The input to the transformer is referred to as tokens. In NLP token are words or sub-words, and are one hot encoded into
-a unique vector for each token. The input token vectors are then converted to a more dense vector (reducing its
-dimensionality) known as the embedding. The conversion is usually a feed forward network and the parameters are learned
-during training. The goal of the embedding step is twofold. First, it's to represent tokens in a lower dimensional and
-more dense vector space, to increase computational efficiency. Second, is to gain some understanding of the language and
-place similar words closer together in the embedding space.
+The input to the transformer is referred to as tokens. In NLP, tokens are words or sub-words, and are one-hot-encoded
+into a unique vector for each token. The input token vectors are then converted to a denser vector (thereby reducing
+their dimensionality), which is known as the embedding. The conversion is usually a feed-forward network, and the
+parameters are learned during training. The goal of the embedding step is twofold. First, it's to represent tokens in a
+lower dimensional and denser vector space, to increase computational efficiency. Second, it aims to gain some
+understanding of the language and to place similar words closer together in the embedding space.
 
 ### Positional Encoding
 
-In NLP the location of the tokens contribute to their meaning. For example, "is" at the beginning of the sentence vs the
-middle of the sentence, may have a different meaning and significance. When the sentence is tokenized and embedded, the
-positional information is lost. To recapture this information a precomputed vector, that depends on the position of the
-token is added to the embedding, to preserve the order of the sequence.
+In NLP, the location of the tokens contributes to their meanings. For example, "is" at the beginning of the sentence
+versus the middle of the sentence may have different significance. When the sentence is tokenized and embedded, the
+positional information is lost. To recapture this information, a precomputed vector that depends on the token's position
+is added to the embedding to preserve the order of the sequence.
 
 ### Encoder Block
 
-#### Self Attention
+#### Self-Attention
 
-This component allows the model to weigh the importance of different words in the sequence, regardless of their
+This component allows the model to assess the importance of different words in the sequence, regardless of their
 position. For each token, the transformer calculates a set of query (Q), key (K), and value (V) vectors by transforming
-the embedding vector using learned weights. The model then computes an attention score, by computing the dot product of
-the query vector with all key vectors and applies a softmax function to determine the weights for the values. This score
-tells the model what tokens are important to the current token. The attention scores are then used to create a
-weighted sum of the value vectors, resulting in an output that is sensitive to the entire input sequence.
+the embedding vector using learned weights. The model then computes an attention score by calculating the dot product of
+the query vector with all key vectors and applying a softmax function to determine the weights for the values. This
+score informs the model which tokens are crucial to the current token. The attention scores are subsequently used to
+create a weighted sum of the value vectors, resulting in an output that is responsive to the entire input sequence.
 
-The process describe above is a self attention head. Multiple of these heads are used in the transformer to compose the
-multi head attention block. The output of the multi-head attention are concatenated and then passed through a learned
-linear layer, to compress the dimensionality back to the embedding length.
+The process described above defines a self-attention head. Multiple such heads are utilized in the transformer to form
+the multi-head attention block. The outputs of the multi-head attention are concatenated and then processed through a
+learned linear layer to compress the dimensionality back to the embedding length.
 
-A similarity can be seen between the self attention block of a transformer and the convolution step in CNNs. The
-convolution layer, tries to find correlations
-between adjacent samples, and as you go deeper into the network the receptive field increases, and a wider set of
-correlations are obtained. Self attention, similarly tries to find correlation between the different tokens in a
-sequence.
+A similarity can be observed between the self-attention block of a transformer and the convolutional step in CNNs. The
+convolutional layer attempts to find correlations between adjacent pixels, while self-attention seeks to identify
+correlations among tokens in a sequence.
 
-A layer normalization and a residual connection is added to the output of the multi-head attention block.
+Layer normalization and a residual connection are added to the output of the multi-head attention block.
 
 #### Layer Normalization and Residual Connection
 
-You've seen residual connections and normalization in ResNet and as mentioned they help with keeping the statistics of
-the activations and gradients from exploding or vanishing, and help the optimizer to converge.
+You’ve already seen how residual connections and normalization in ResNet help maintain the statistics of activations and
+gradients from exploding or vanishing, aiding the optimizer in achieving convergence.
 
-The normalization used in the transformer architecture is layer norm and not batch norm. Batch normalization is not
-suitable for sequence prediction tasks due to the following reasons:
+The normalization used in transformer architectures is layer norm, not batch norm. Batch normalization is unsuitable for
+sequence prediction tasks for several reasons:
 
-* Variable sequence length: NLP commonly has variable input length which pose a problem for batch normalization in
-  batches with different number of samples. This can lead to misleading batch statistics and impact model performance.
-* Dynamics of sequences: Traditionally, NLP used RNNs which would process the input sequentially, and state of the
-  network at any time depended
-  on the previous step. Batch normalization, which normalizes input features across the batch, may disrupt this temporal
-  dependency, as it normalizes across an entire batch for each feature independently of the sequence order or context.
-* Small batch size: Traditionally training in NLP was done in small batches, due to memory constraints. These small
-  batches pose a problem for batch normalization as the estimates of batch statistics become less accurate.
+* Variable Sequence Length: NLP often involves variable input lengths, which pose a challenge for batch normalization
+  when handling batches with different numbers of samples. This variation can lead to inaccurate batch statistics and
+  adversely affect model performance.
+* Dynamics of sequences: In traditional NLP, RNNs processed inputs sequentially, with the state of the network at any
+  moment depending on the previous step. Batch normalization normalizes input features across the batch, potentially
+  disrupting this temporal dependency by treating each feature independently of the sequence order or context.
+* Small batch size: NLP training traditionally used small batches due to memory constraints. Small batches can cause
+  problems for batch normalization because the estimates of batch statistics are less reliable.
 
-Layer norm which was introduced in "Layer Normalization. - Lei Ba, J. et al (2016)" hoped to resolve the issues
-mentioned above. It computes the statistics used for normalization over the incoming pre-activations for a single
-sample. So if the input is of size [B, S, E] = [batch, sequence, embedding], layer norm computes a single mean and
-variance over the E dimension, resulting in a different mean and variance at each time step for each sample. The
-pre-activations are normalized by this mean and variance, and a learnable beta and gamma are introduced as in batch
-norm. You can see how layer norm is independent of the batch size or sequence length. As in batch norm, layer norm
-helped stabilized training, leading to faster convergence of the optimizer.
+Layer norm, introduced in "Layer Normalization - Lei Ba, J. et al. (2016)," addresses these issues. It computes
+statistics for normalization over the incoming pre-activations for a single sample. For example, if the input is
+sized [B, S, E] (batch, sequence, embedding), layer norm calculates a unique mean and variance for the E dimension at
+each timestep for each sample. The pre-activations are normalized by this mean and variance, and learnable beta and
+gamma parameters are introduced, similar to batch norm. Layer norm operates independently of batch size or sequence
+length, stabilizing training and enabling faster optimizer convergence.
 
 #### Feed Forward Network
 
-A feed forward network, or sometimes referred to as a multi-layer perceptron (MLP), which is typically composed of two
-linear layers with ReLU activation, further processes and
-transforms the embeddings adding another level of representational learning. Another layer norm and residual connection
-is added after this feed forward network.
+A feed-forward network, sometimes referred to as a multi-layer perceptron (MLP), is typically composed of two linear
+layers activated by ReLU. This network further processes and transforms the embeddings, adding another level of
+representational learning. After this feed-forward network, another layer normalization and a residual connection are
+added.
 
 ### Encoder
 
-The encoder takes a number of these encoder blocks described above and sequentially stacks them together. Finally a
-layer norm can
-be added at the output.
+The encoder consists of several encoder blocks described above, which are sequentially stacked together. Finally, a
+layer normalization can be added at the output.
 
 ### Head
 
-A task specific head is attached to the output of the encoder, which is usually one or multiple linear layers with
-non-linear activation. The
-reason for a separate head block is to have different heads for different tasks, while reusing the same weights in the
-encoder block. For-example, a model was trained for sentiment analysis, and now we want to train it for named entity
-recognition (NER). We can re-initialize all the weights and retrain the whole model for NER, but this approach is
-inefficient, and will take a long time to train. A more efficient approach is to remove the head of
-the model, use another head for NER, set the encoder weights to the values used for sentiment analysis and only
-re-initialize the weights for the head. The model is now trained for NER, and training will complete at a much faster
-pace. This is also referred to as fine-tuning.
+A task-specific head is attached to the output of the encoder, usually consisting of one or multiple linear layers with
+non-linear activation. The purpose of having a separate head block is to enable different heads for different tasks
+while reusing the same weights in the encoder block. For example, suppose a model was trained for sentiment analysis and
+is now needed for named entity recognition (NER). Instead of initializing all the weights and retraining the entire
+model for NER—an inefficient and time-consuming process—a more efficient approach is to replace the head used for
+sentiment analysis with one designed for NER, retain the encoder weights from the sentiment analysis training, and only
+initialize the weights for the new head. This method allows the model to be trained for NER at a much faster pace and
+is commonly known as fine-tuning.
 
 ### ViT
 
-The vision transformer uses the exact architecture described above. The only issue to solve is how to feed an image to
-an architecture expecting tokens. "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale -
-Dosovitskiy, A. et al. (2020)." solved it by splitting the image into patches, serializing the patches and having
-these patches represent the tokens. The remaining steps are exactly described above.
+The Vision Transformer (ViT) uses the exact architecture described above. The main challenge it addresses is how to
+adapt an architecture designed for token processing to handle images. This challenge was solved by "An Image is Worth
+16x16 Words: Transformers for Image Recognition at Scale - Dosovitskiy, A. et al. (2020)," which introduced a method of
+splitting the image into patches, serializing these patches, and using them to represent the tokens. The subsequent
+steps in processing these image-derived tokens are exactly as described above.
 
 ![](./assets/vision-transformer.png)
 
-ViT uses GeLU as its non-linearity. GeLU is smoother than ReLU and has been shown to
-learn more complex data patterns in deep learning. However, it is more computationally inefficient compared to ReLU.
+ViT utilizes the Gaussian Error Linear Unit (GeLU) as its non-linearity function. GeLU is preferred over the Rectified
+Linear Unit (ReLU) because it is smoother and capable of learning more complex data patterns in deep learning contexts.
+However, GeLU is less computationally efficient compared to ReLU.
 
 ![](./assets/vision-transformer.png)
 
 ### Network Architecture
 
-The architecture is shown below, and has 57 million parameters, twice the size of ResNet.
+The Vision Transformer (ViT) is shown below with all its parameters. It contains 57 million parameters, which is twice
+the number found in ResNet.
 
 ```
 ----------------------------------------------------------------
@@ -820,7 +821,7 @@ Estimated Total Size (MB): 537516.68
 
 ### Implementation and Results
 
-The hyperparameters for training are as follows:
+The hyperparameters used for training were:
 
 ```python
 LEARNING_RATE = 1e-4
@@ -832,9 +833,9 @@ LEARNING_RATE_DECAY_STEP_SIZE = 1000
 WEIGHT_DECAY = 1e-2
 ```
 
-I was only able to achieve a 68% accuracy. The authors of the paper mentioned, for the best results, they first trained
-the ViT on a massive corpus of data. And then they fine-tuned the model for a more specific task. In the future I would
-like to pre-initialize the weights from their model, and fine-tune for this classification task.
+I was only able to achieve 68% accuracy. To obtain the best results, the authors first trained the ViT on a massive
+corpus of data and then fine-tuned it for a more specific task. In the future, I would like to initialize the weights
+from their model and fine-tune it for this specific classification task.
 
 ```
 Epoch: 200 	Step: 7370 	Loss: 0.3008 	Acc: 88.28125 %
@@ -849,9 +850,9 @@ Accuracy of the network on the 10000 test images: 68.84075927734375 %
 
 ## Final Thoughts
 
-We've reached the end of our journey. We started looking at AlexNet which kick-started the deeplearning craze. VGGs made
-networks deeper by using smaller filters. In the ResNet section, we were introduced to residual connections and batch
-normalizations, which sped up training. Finally, Transformer model was introduced, and ViT adapted this architecture for
-the use of vision applications. Hopefully by introductions concepts gradually, you were able to get a better
-understanding of deeplearning techniques, and why certain decisions were made. For future work more architectures can be
-explored, including SWIN and DaViT.
+We've reached the end of our journey. We started by examining the AlexNet model, which kick-started the deep learning
+craze. We then explored VGG models, which made networks deeper by using smaller filters. In the ResNet section, we were
+introduced to residual connections and batch normalizations, which sped up training. Finally, we discussed the
+Transformer architecture, and how ViT adapted it for use in vision applications. Hopefully, by introducing concepts
+gradually, you have gained a better understanding of deep learning techniques and the rationale behind certain
+decisions. For future work, I will explore more state-of-the-art architectures, such as SWIN and DaViT.
