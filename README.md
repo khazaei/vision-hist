@@ -656,7 +656,14 @@ these patches represent the tokens. The remaining steps are exactly described ab
 
 ![](./assets/vision-transformer.png)
 
+ViT uses GeLU as its non-linearity. GeLU is smoother than ReLU and has been shown to
+learn more complex data patterns in deep learning. However, it is more computationally inefficient compared to ReLU.
+
+![](./assets/vision-transformer.png)
+
 ### Network Architecture
+
+The architecture is shown below, and has 57 million parameters, twice the size of ResNet.
 
 ```
 ----------------------------------------------------------------
@@ -810,3 +817,41 @@ Params size (MB): 218.60
 Estimated Total Size (MB): 537516.68
 ----------------------------------------------------------------
 ```
+
+### Implementation and Results
+
+The hyperparameters for training are as follows:
+
+```python
+LEARNING_RATE = 1e-4
+NUM_EPOCHS = 200
+BATCH_SIZE = 256
+IMAGE_DIM = 224
+LEARNING_RATE_DECAY_FACTOR = 0.1
+LEARNING_RATE_DECAY_STEP_SIZE = 1000
+WEIGHT_DECAY = 1e-2
+```
+
+I was only able to achieve a 68% accuracy. The authors of the paper mentioned, for the best results, they first trained
+the ViT on a massive corpus of data. And then they fine-tuned the model for a more specific task. In the future I would
+like to pre-initialize the weights from their model, and fine-tune for this classification task.
+
+```
+Epoch: 200 	Step: 7370 	Loss: 0.3008 	Acc: 88.28125 %
+Epoch: 200 	Step: 7380 	Loss: 0.4843 	Acc: 83.984375 %
+Epoch: 200 	Step: 7390 	Loss: 0.3834 	Acc: 88.28125 %
+Epoch: 200 	Step: 7400 	Loss: 0.3539 	Acc: 88.14229583740234 %
+Accuracy of the network on the 10000 test images: 69.29936218261719 %
+training complete
+testing on cuda
+Accuracy of the network on the 10000 test images: 68.84075927734375 %
+```
+
+## Final Thoughts
+
+We've reached the end of our journey. We started looking at AlexNet which kick-started the deeplearning craze. VGGs made
+networks deeper by using smaller filters. In the ResNet section, we were introduced to residual connections and batch
+normalizations, which sped up training. Finally, Transformer model was introduced, and ViT adapted this architecture for
+the use of vision applications. Hopefully by introductions concepts gradually, you were able to get a better
+understanding of deeplearning techniques, and why certain decisions were made. For future work more architectures can be
+explored, including SWIN and DaViT.
