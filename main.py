@@ -1,5 +1,6 @@
 import AlexNet
 import VGG
+import VisionTransformer
 import ResNet
 import train
 import pytorch_dataset
@@ -15,7 +16,7 @@ NUM_CLASSES = 10
 
 
 def main():
-    model = ResNet.ResNet(num_classes=NUM_CLASSES)
+    model = VisionTransformer.getViT_B_16(num_classes=NUM_CLASSES)
     print('model created')
     summary(model, (3, model.in_dim, model.in_dim))
 

@@ -37,10 +37,9 @@ class ResidualBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, num_classes=1000):
+    def __init__(self, layers, num_classes=1000):
         super().__init__()
 
-        layers = [3, 4, 6, 3]
         print("creating ResNet")
         self.conv1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
@@ -81,7 +80,7 @@ class ResNet(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+            elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
@@ -108,3 +107,8 @@ class ResNet(nn.Module):
     def lr_scheduler(self):
         return torch.optim.lr_scheduler.StepLR(self.optim, step_size=LEARNING_RATE_DECAY_STEP_SIZE,
                                                gamma=LEARNING_RATE_DECAY_FACTOR)
+
+
+def get_ResNet34(num_classes):
+    layers = [3, 4, 6, 3]
+    return ResNet(layers, num_classes)

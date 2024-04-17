@@ -12,7 +12,7 @@ each change. The architectures we will explore are:
 * AlexNet
 * VGG
 * ResNet
-* Vision Transformers
+* Vision Transformer
 
 A side note on the training data: All the papers used the ImageNet dataset for training and validation. I use
 Imagenette as the dataset to evaluate the different architectures. Imagenette is a subset of 10 easily classified
@@ -264,12 +264,15 @@ DEVICE_IDS = [0, 1]
 model = torch.nn.parallel.DataParallel(model, device_ids=DEVICE_IDS)
 ```
 
-### Weight Initialization
+### Glorot Initialization
 
 To initialize the network, the authors pretrained a shallower network, and then used these weights to initialize the
 deeper networks. This helped training convergence. Later on, the authors mentioned that Glorot initialization, without
-pretraining, resulted in the same performance. Glorot initialization takes into account the fan-in and scales the
-weights, which reduces saturation during backpropagation and forward pass.
+pretraining, resulted in the same performance. Glorot initialization described in "Understanding the difficulty of
+training deep feedforward neural networks - Glorot, X. & Bengio, Y. (2010).", takes into account the fan-in and scales
+the
+weights, which reduces saturation during backpropagation and forward pass. For glorot, also known as xavier
+initialization the weights are drawn from a distribution with its variance scale by the (fan_in + fan_out).
 
 ```python
 nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu')
@@ -322,10 +325,12 @@ Accuracy of the network on the 10000 test images: 85.73248291015625 %
 After VGG showed promising results, it was understood that deeper networks provide better performance. However, deeper
 networks were harder to train and suffered from vanishing gradient or exploding gradient problem. Batch normalization
 and proper initialization of the weights did help in that regard, however, the solvers were still having convergence
-issues, and the deeps networks weren't as performant. The solution in ResNet was to introduce skip connections or
+issues, and the deeps networks weren't as performant. The solution proposed by He et al. in "Deep Residual Learning for
+Image Recognition" was to introduce skip connections or
 residual connections that pass the input to the output. The structure is shown in the figure below. This residual
-connection, enabled optimizers to converge, and allowed deeper CNNs. This allowed ResNet to have 8 times the depth of a
-VGG, yet have fewer parameters.
+connection, enabled optimizers to converge, and allowed deeper CNNs. This allowed ResNet32 to have 8 times the depth of
+a
+VGG16, yet have fewer parameters.
 
 ![](./assets/ResNet-architecture.png)
 
@@ -345,11 +350,32 @@ computed over the batch. The other issue is the discrepancies in model behavior 
 training and inference. During training normalization is done on the batch statistics, however, at inference time these
 batch statistics are replaced with the moving averages.
 
+The input to batch norm is of shape [B, H, W, C] = [batch, height, width, channel]. The statistics are computed over B,
+H, W, resulting in C values for mean and variance. These C values are used to normalize the samples across the channels,
+resulting in an output of size [B, H, W, C].
+
+```python
+nn.BatchNorm2d(out_channels),
+```
+
+### He Initialization
+
+He initialization, also known as Kaiming initialization, described in "Delving deep into rectifiers: Surpassing
+human-level performance on ImageNet classification - He, K. et al. (2015)." was designed for networks with ReLU
+activation. As in glorot initialization, the variance of the distribution is scaled by fan in, to keep consistent
+statistics across activations. In addition, the variance is multiplied by two to compensate for the ReLU activation.
+ReLU can potentially create imbalance in the variance of the activations because they push half their output
+to zero. He initialization compensates for this effect.
+
+```python
+nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+```
+
 ### Network Architecture
 
 ResNet is composed of multiple residual blocks of varying output channel sizes. Each residual block is composed of two
 convolution layers followed by batch norms with a residual connection at the output. There is a total of 16 blocks, plus
-a single convolution layer at the beginning and a fully connected layer at the end, resulting in 36 layers and 21
+a single convolution layer at the beginning and a fully connected layer at the end, resulting in 34 layers and 21
 million parameters.
 
 ```
@@ -518,4 +544,269 @@ Accuracy of the network on the 10000 test images: 86.36942291259766 %
 training complete
 testing on cuda
 Accuracy of the network on the 10000 test images: 86.64967346191406 %
+```
+
+## Vision Transformer
+
+We now move on to vision transformers. Transformers made waves when first introduced in "Attention Is All You Need -
+Viswani, A. et al. (2017)"
+and have had significant impact in natural language processing (NLP). The architectures enabled massive parallelism in
+training large corpus of text on multiple GPUs. These models are comprised of billions of parameters and are
+known as large language models. They have showed successful in chatbots, and AI assistants, and are now being used
+in vision applications. We'll fist explore the encoder transformer architecture as used in NLP, and see how it's adapted
+for vision. The architecture is shown below, we will go through each in detail.
+
+![](./assets/transformer.png)
+
+### Input Embedding
+
+The input to the transformer is referred to as tokens. In NLP token are words or sub-words, and are one hot encoded into
+a unique vector for each token. The input token vectors are then converted to a more dense vector (reducing its
+dimensionality) known as the embedding. The conversion is usually a feed forward network and the parameters are learned
+during training. The goal of the embedding step is twofold. First, it's to represent tokens in a lower dimensional and
+more dense vector space, to increase computational efficiency. Second, is to gain some understanding of the language and
+place similar words closer together in the embedding space.
+
+### Positional Encoding
+
+In NLP the location of the tokens contribute to their meaning. For example, "is" at the beginning of the sentence vs the
+middle of the sentence, may have a different meaning and significance. When the sentence is tokenized and embedded, the
+positional information is lost. To recapture this information a precomputed vector, that depends on the position of the
+token is added to the embedding, to preserve the order of the sequence.
+
+### Encoder Block
+
+#### Self Attention
+
+This component allows the model to weigh the importance of different words in the sequence, regardless of their
+position. For each token, the transformer calculates a set of query (Q), key (K), and value (V) vectors by transforming
+the embedding vector using learned weights. The model then computes an attention score, by computing the dot product of
+the query vector with all key vectors and applies a softmax function to determine the weights for the values. This score
+tells the model what tokens are important to the current token. The attention scores are then used to create a
+weighted sum of the value vectors, resulting in an output that is sensitive to the entire input sequence.
+
+The process describe above is a self attention head. Multiple of these heads are used in the transformer to compose the
+multi head attention block. The output of the multi-head attention are concatenated and then passed through a learned
+linear layer, to compress the dimensionality back to the embedding length.
+
+A similarity can be seen between the self attention block of a transformer and the convolution step in CNNs. The
+convolution layer, tries to find correlations
+between adjacent samples, and as you go deeper into the network the receptive field increases, and a wider set of
+correlations are obtained. Self attention, similarly tries to find correlation between the different tokens in a
+sequence.
+
+A layer normalization and a residual connection is added to the output of the multi-head attention block.
+
+#### Layer Normalization and Residual Connection
+
+You've seen residual connections and normalization in ResNet and as mentioned they help with keeping the statistics of
+the activations and gradients from exploding or vanishing, and help the optimizer to converge.
+
+The normalization used in the transformer architecture is layer norm and not batch norm. Batch normalization is not
+suitable for sequence prediction tasks due to the following reasons:
+
+* Variable sequence length: NLP commonly has variable input length which pose a problem for batch normalization in
+  batches with different number of samples. This can lead to misleading batch statistics and impact model performance.
+* Dynamics of sequences: Traditionally, NLP used RNNs which would process the input sequentially, and state of the
+  network at any time depended
+  on the previous step. Batch normalization, which normalizes input features across the batch, may disrupt this temporal
+  dependency, as it normalizes across an entire batch for each feature independently of the sequence order or context.
+* Small batch size: Traditionally training in NLP was done in small batches, due to memory constraints. These small
+  batches pose a problem for batch normalization as the estimates of batch statistics become less accurate.
+
+Layer norm which was introduced in "Layer Normalization. - Lei Ba, J. et al (2016)" hoped to resolve the issues
+mentioned above. It computes the statistics used for normalization over the incoming pre-activations for a single
+sample. So if the input is of size [B, S, E] = [batch, sequence, embedding], layer norm computes a single mean and
+variance over the E dimension, resulting in a different mean and variance at each time step for each sample. The
+pre-activations are normalized by this mean and variance, and a learnable beta and gamma are introduced as in batch
+norm. You can see how layer norm is independent of the batch size or sequence length. As in batch norm, layer norm
+helped stabilized training, leading to faster convergence of the optimizer.
+
+#### Feed Forward Network
+
+A feed forward network, or sometimes referred to as a multi-layer perceptron (MLP), which is typically composed of two
+linear layers with ReLU activation, further processes and
+transforms the embeddings adding another level of representational learning. Another layer norm and residual connection
+is added after this feed forward network.
+
+### Encoder
+
+The encoder takes a number of these encoder blocks described above and sequentially stacks them together. Finally a
+layer norm can
+be added at the output.
+
+### Head
+
+A task specific head is attached to the output of the encoder, which is usually one or multiple linear layers with
+non-linear activation. The
+reason for a separate head block is to have different heads for different tasks, while reusing the same weights in the
+encoder block. For-example, a model was trained for sentiment analysis, and now we want to train it for named entity
+recognition (NER). We can re-initialize all the weights and retrain the whole model for NER, but this approach is
+inefficient, and will take a long time to train. A more efficient approach is to remove the head of
+the model, use another head for NER, set the encoder weights to the values used for sentiment analysis and only
+re-initialize the weights for the head. The model is now trained for NER, and training will complete at a much faster
+pace. This is also referred to as fine-tuning.
+
+### ViT
+
+The vision transformer uses the exact architecture described above. The only issue to solve is how to feed an image to
+an architecture expecting tokens. "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale -
+Dosovitskiy, A. et al. (2020)." solved it by splitting the image into patches, serializing the patches and having
+these patches represent the tokens. The remaining steps are exactly described above.
+
+![](./assets/vision-transformer.png)
+
+### Network Architecture
+
+```
+----------------------------------------------------------------
+        Layer (type)               Output Shape         Param #
+================================================================
+            Conv2d-1          [-1, 768, 14, 14]         590,592
+           Dropout-2             [-1, 197, 768]               0
+         LayerNorm-3             [-1, 197, 768]           1,536
+MultiheadAttention-4  [[-1, 197, 768], [-1, 197, 197]]               0
+           Dropout-5             [-1, 197, 768]               0
+         LayerNorm-6             [-1, 197, 768]           1,536
+            Linear-7            [-1, 197, 3072]       2,362,368
+              GELU-8            [-1, 197, 3072]               0
+           Dropout-9            [-1, 197, 3072]               0
+           Linear-10             [-1, 197, 768]       2,360,064
+          Dropout-11             [-1, 197, 768]               0
+         MlpBlock-12             [-1, 197, 768]               0
+     EncoderBlock-13             [-1, 197, 768]               0
+        LayerNorm-14             [-1, 197, 768]           1,536
+MultiheadAttention-15  [[-1, 197, 768], [-1, 197, 197]]               0
+          Dropout-16             [-1, 197, 768]               0
+        LayerNorm-17             [-1, 197, 768]           1,536
+           Linear-18            [-1, 197, 3072]       2,362,368
+             GELU-19            [-1, 197, 3072]               0
+          Dropout-20            [-1, 197, 3072]               0
+           Linear-21             [-1, 197, 768]       2,360,064
+          Dropout-22             [-1, 197, 768]               0
+         MlpBlock-23             [-1, 197, 768]               0
+     EncoderBlock-24             [-1, 197, 768]               0
+        LayerNorm-25             [-1, 197, 768]           1,536
+MultiheadAttention-26  [[-1, 197, 768], [-1, 197, 197]]               0
+          Dropout-27             [-1, 197, 768]               0
+        LayerNorm-28             [-1, 197, 768]           1,536
+           Linear-29            [-1, 197, 3072]       2,362,368
+             GELU-30            [-1, 197, 3072]               0
+          Dropout-31            [-1, 197, 3072]               0
+           Linear-32             [-1, 197, 768]       2,360,064
+          Dropout-33             [-1, 197, 768]               0
+         MlpBlock-34             [-1, 197, 768]               0
+     EncoderBlock-35             [-1, 197, 768]               0
+        LayerNorm-36             [-1, 197, 768]           1,536
+MultiheadAttention-37  [[-1, 197, 768], [-1, 197, 197]]               0
+          Dropout-38             [-1, 197, 768]               0
+        LayerNorm-39             [-1, 197, 768]           1,536
+           Linear-40            [-1, 197, 3072]       2,362,368
+             GELU-41            [-1, 197, 3072]               0
+          Dropout-42            [-1, 197, 3072]               0
+           Linear-43             [-1, 197, 768]       2,360,064
+          Dropout-44             [-1, 197, 768]               0
+         MlpBlock-45             [-1, 197, 768]               0
+     EncoderBlock-46             [-1, 197, 768]               0
+        LayerNorm-47             [-1, 197, 768]           1,536
+MultiheadAttention-48  [[-1, 197, 768], [-1, 197, 197]]               0
+          Dropout-49             [-1, 197, 768]               0
+        LayerNorm-50             [-1, 197, 768]           1,536
+           Linear-51            [-1, 197, 3072]       2,362,368
+             GELU-52            [-1, 197, 3072]               0
+          Dropout-53            [-1, 197, 3072]               0
+           Linear-54             [-1, 197, 768]       2,360,064
+          Dropout-55             [-1, 197, 768]               0
+         MlpBlock-56             [-1, 197, 768]               0
+     EncoderBlock-57             [-1, 197, 768]               0
+        LayerNorm-58             [-1, 197, 768]           1,536
+MultiheadAttention-59  [[-1, 197, 768], [-1, 197, 197]]               0
+          Dropout-60             [-1, 197, 768]               0
+        LayerNorm-61             [-1, 197, 768]           1,536
+           Linear-62            [-1, 197, 3072]       2,362,368
+             GELU-63            [-1, 197, 3072]               0
+          Dropout-64            [-1, 197, 3072]               0
+           Linear-65             [-1, 197, 768]       2,360,064
+          Dropout-66             [-1, 197, 768]               0
+         MlpBlock-67             [-1, 197, 768]               0
+     EncoderBlock-68             [-1, 197, 768]               0
+        LayerNorm-69             [-1, 197, 768]           1,536
+MultiheadAttention-70  [[-1, 197, 768], [-1, 197, 197]]               0
+          Dropout-71             [-1, 197, 768]               0
+        LayerNorm-72             [-1, 197, 768]           1,536
+           Linear-73            [-1, 197, 3072]       2,362,368
+             GELU-74            [-1, 197, 3072]               0
+          Dropout-75            [-1, 197, 3072]               0
+           Linear-76             [-1, 197, 768]       2,360,064
+          Dropout-77             [-1, 197, 768]               0
+         MlpBlock-78             [-1, 197, 768]               0
+     EncoderBlock-79             [-1, 197, 768]               0
+        LayerNorm-80             [-1, 197, 768]           1,536
+MultiheadAttention-81  [[-1, 197, 768], [-1, 197, 197]]               0
+          Dropout-82             [-1, 197, 768]               0
+        LayerNorm-83             [-1, 197, 768]           1,536
+           Linear-84            [-1, 197, 3072]       2,362,368
+             GELU-85            [-1, 197, 3072]               0
+          Dropout-86            [-1, 197, 3072]               0
+           Linear-87             [-1, 197, 768]       2,360,064
+          Dropout-88             [-1, 197, 768]               0
+         MlpBlock-89             [-1, 197, 768]               0
+     EncoderBlock-90             [-1, 197, 768]               0
+        LayerNorm-91             [-1, 197, 768]           1,536
+MultiheadAttention-92  [[-1, 197, 768], [-1, 197, 197]]               0
+          Dropout-93             [-1, 197, 768]               0
+        LayerNorm-94             [-1, 197, 768]           1,536
+           Linear-95            [-1, 197, 3072]       2,362,368
+             GELU-96            [-1, 197, 3072]               0
+          Dropout-97            [-1, 197, 3072]               0
+           Linear-98             [-1, 197, 768]       2,360,064
+          Dropout-99             [-1, 197, 768]               0
+        MlpBlock-100             [-1, 197, 768]               0
+    EncoderBlock-101             [-1, 197, 768]               0
+       LayerNorm-102             [-1, 197, 768]           1,536
+MultiheadAttention-103  [[-1, 197, 768], [-1, 197, 197]]               0
+         Dropout-104             [-1, 197, 768]               0
+       LayerNorm-105             [-1, 197, 768]           1,536
+          Linear-106            [-1, 197, 3072]       2,362,368
+            GELU-107            [-1, 197, 3072]               0
+         Dropout-108            [-1, 197, 3072]               0
+          Linear-109             [-1, 197, 768]       2,360,064
+         Dropout-110             [-1, 197, 768]               0
+        MlpBlock-111             [-1, 197, 768]               0
+    EncoderBlock-112             [-1, 197, 768]               0
+       LayerNorm-113             [-1, 197, 768]           1,536
+MultiheadAttention-114  [[-1, 197, 768], [-1, 197, 197]]               0
+         Dropout-115             [-1, 197, 768]               0
+       LayerNorm-116             [-1, 197, 768]           1,536
+          Linear-117            [-1, 197, 3072]       2,362,368
+            GELU-118            [-1, 197, 3072]               0
+         Dropout-119            [-1, 197, 3072]               0
+          Linear-120             [-1, 197, 768]       2,360,064
+         Dropout-121             [-1, 197, 768]               0
+        MlpBlock-122             [-1, 197, 768]               0
+    EncoderBlock-123             [-1, 197, 768]               0
+       LayerNorm-124             [-1, 197, 768]           1,536
+MultiheadAttention-125  [[-1, 197, 768], [-1, 197, 197]]               0
+         Dropout-126             [-1, 197, 768]               0
+       LayerNorm-127             [-1, 197, 768]           1,536
+          Linear-128            [-1, 197, 3072]       2,362,368
+            GELU-129            [-1, 197, 3072]               0
+         Dropout-130            [-1, 197, 3072]               0
+          Linear-131             [-1, 197, 768]       2,360,064
+         Dropout-132             [-1, 197, 768]               0
+        MlpBlock-133             [-1, 197, 768]               0
+    EncoderBlock-134             [-1, 197, 768]               0
+       LayerNorm-135             [-1, 197, 768]           1,536
+         Encoder-136             [-1, 197, 768]               0
+          Linear-137                   [-1, 10]           7,690
+================================================================
+Total params: 57,305,866
+Trainable params: 57,305,866
+Non-trainable params: 0
+----------------------------------------------------------------
+Input size (MB): 0.57
+Forward/backward pass size (MB): 537297.50
+Params size (MB): 218.60
+Estimated Total Size (MB): 537516.68
+----------------------------------------------------------------
 ```
