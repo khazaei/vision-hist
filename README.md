@@ -21,9 +21,11 @@ architectures. Imagenette is smaller, easier to store, and requires less trainin
 
 ## AlexNet
 
-The first architecture we will explore is AlexNet. Introduced in 2012, AlexNet made waves by achieving a top-5 error
-rate of 15.3%, which was 10% lower than its nearest competitor in the ImageNet competitions. Let’s review some
-key contributions of this paper.
+The first architecture we will explore is AlexNet. Introduced in "ImageNet Classification with Deep Convolutional Neural
+Networks - Krizhevsky, A. et al. (2012)", AlexNet made waves by achieving a top-5 error rate of 15.3%, which was 10%
+lower than its nearest competitor in the ImageNet competitions. Let’s review some key contributions of this paper.
+
+![](./assets/alexnet.png)
 
 ### Architecture
 
@@ -188,6 +190,8 @@ error rate of 8%. At the time, there was a prevailing theory that deeper network
 networks were notoriously difficult to train. Advances in AI/ML techniques and enhanced GPU support eventually made it
 feasible to train deeper networks like VGG. This model came in different configurations, including variants with 16 and
 19 layers.
+
+![](./assets/vgg.png)
 
 ### Network Architecture
 
