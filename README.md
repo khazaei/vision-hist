@@ -1,34 +1,34 @@
 # vision-hist
 
-A stroll down memory lane: When I first came across the transformer architecture I was impressed by the engineering
-involved, and asked myself how on earth did anyone come up with this? After digging in a bit, I realized this wasn't
-something that was discovered overnight. It was a result of progressive and iterative processes, built upon
-years of accumulated knowledge. To get a good understanding on the rationale behind specific engineering decisions its
-always good to look back in history. In this series, I will delve into the evolution of vision neural network
-architectures over time. I've selected a few architectures that were groundbreaking for their era, and I'll be
-dissecting their papers, highlighting the novelty introduced in each architecture, and providing some intuition behind
-each change. The architectures we will explore are:
+A stroll down memory lane: When I first encountered the transformer architecture, I was struck by the complexity of the
+engineering involved and wondered how anyone could have conceived such an idea. Upon further investigation, I realized
+that this breakthrough didn't occur overnight. It emerged from progressive and iterative processes, built upon years of
+accumulated knowledge. To fully understand the rationale behind specific engineering decisions, it's always beneficial
+to review historical developments. In this series, I will explore the evolution of vision neural network architectures
+over time. I have selected a few architectures that were groundbreaking for their era. I will dissect their papers,
+highlight the novel features introduced in each, and provide some insight into the reasoning behind each modification.
+The architectures we will examine are:
 
 * AlexNet
 * VGG
 * ResNet
 * Vision Transformer
 
-A side note on the training data: All the papers used the ImageNet dataset for training and validation. I use
-Imagenette as the dataset to evaluate the different architectures. Imagenette is a subset of 10 easily classified
-classes from ImageNet (tench, English springer, cassette player, chainsaw, church, French horn, garbage truck, gas pump,
-golf ball, parachute). It's smaller, making it easier to store, and it takes less time to train.
+A side note on the training data: All the papers utilized the ImageNet dataset for training and validation. However, I
+will use Imagenette—a subset of ImageNet consisting of 10 easily classified classes (tench, English springer, cassette
+player, chainsaw, church, French horn, garbage truck, gas pump, golf ball, parachute)—to evaluate the different
+architectures. Imagenette is smaller, easier to store, and requires less training time.
 
 ## AlexNet
 
-The first architecture we will explore is AlexNet. This was the architecture introduced in 2012, which made waves when
-it achieved a top 5 error rate of 15.3%, 10% lower than its runner-up in the ImageNet competitions. Let's go over some
+The first architecture we will explore is AlexNet. Introduced in 2012, AlexNet made waves by achieving a top-5 error
+rate of 15.3%, which was 10% lower than its nearest competitor in the ImageNet competitions. Let’s review some
 key contributions of this paper.
 
 ### Architecture
 
-The network consists of 5 convolutional layers followed by 3 fully connected layers. For the full details of the
-parameters, check out the code, but here is a condensed view of what it looks like:
+The network comprises five convolutional layers followed by three fully connected layers. Below is a condensed overview
+of the architecture:
 
 ```
 ----------------------------------------------------------------
@@ -70,28 +70,26 @@ Estimated Total Size (MB): 237.79
 
 ### ReLU Activation Function
 
-Traditionally, neural networks used sigmoid or tanh activation functions. AlexNet uses ReLU as its activation function.
-The figure below shows the 3 different activation functions and their derivatives:
+Traditionally, neural networks employed sigmoid or tanh activation functions. However, AlexNet utilizes the ReLU
+activation function. The figure below illustrates the three different activation functions along with their derivatives:
 
 ![](./assets/act-func.png)
 
 ![](./assets/grad-act-func.png)
 
-As you can see, the gradients for ReLU do not saturate for high values when compared to tanh and sigmoid. This helps
-with the vanishing gradient problem experienced during backpropagation when training networks. This effect is more
-prominent in deeper networks; hence ReLU allows training deep CNNs.
-
-Another feature of ReLU is its computational simplicity compared to tanh and sigmoid. It's a `max(0, x)` operation, and
-the gradient is a thresholding operation.
-
-These characteristics lend to faster training of deeper neural networks, leading to better performance.
+As shown, the gradients for ReLU do not saturate at high values, unlike those for tanh and sigmoid. This characteristic
+helps mitigate the vanishing gradient problem that often occurs during backpropagation when training networks. This
+advantage becomes more significant in deeper networks, making ReLU conducive for training deep CNNs. Furthermore, ReLU
+boasts computational simplicity compared to tanh and sigmoid, consisting of a max(0, x) operation, with the gradient
+being a straightforward thresholding operation.These attributes contribute to faster training of deeper neural networks,
+thereby enhancing performance.
 
 ### GPUs
 
-AlexNet was one of the first networks to use multiple GPUs for training. The neurons in each layer were split across two
-GPUs. The GPUs only communicate at certain layers. This enabled larger datasets and faster training times.
-
-You can easily train and test on GPUs in pytorch by moving the model and data to GPU.
+AlexNet was one of the first networks to utilize multiple GPUs for training, distributing the neurons in each layer
+across two GPUs. Communication between the GPUs occurs only at certain layers, which facilitated the handling of larger
+datasets and reduced training times. In PyTorch, you can easily train and test models on GPUs by transferring both the
+model and the data to the GPU.
 
 ```python
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -109,10 +107,9 @@ for epoch in range(num_epochs):
 
 Here are some of the techniques they used for generalization:
 
-1 - Data augmentation: They augmented the dataset by generating new images through horizontal reflection, image
-translation, and altering the intensity of RGB values.
-
-The following code achieves this easily in pytorch:
+1 - Data augmentation: The dataset was augmented by creating new images through horizontal reflection, image
+translation, and modifying the intensity of RGB values. The following PyTorch code snippet facilitates these
+transformations:
 
 ```python
 transform_train = transforms.Compose([
@@ -123,19 +120,18 @@ transform_train = transforms.Compose([
 ])
 ```
 
-At each epoch the images are transformed by random reflection and random cropping. This will allow the model to observe
-more training data and thus increasing the data distribution it's observed.
+At each epoch, images are randomly reflected and cropped, which exposes the model to a broader range of training data,
+thus increasing the observed data distribution.
 
-2 - Drop out regularization: They deployed dropout regularization by randomly zeroing out 50% of the neurons in the
-fully connected network
-during training. Add this line to your neural network to activate it.
+2 - Drop out regularization: Dropout regularization was implemented by randomly zeroing out 50% of the neurons in the
+fully connected layers during training sessions. To activate dropout in your neural network, add the following line:
 
 ```python
 nn.Dropout(p=0.5),
 ```
 
-3 - Local response normalization: Each pixel (x,y location) for each layer is normalized by the sum of all kernel values
-at that pixel location within that layer. Pytorch has an implementation of local response normalization.
+3 - Local response normalization: Each pixel (x,y location) at every layer is normalized by the sum of all kernel values
+at that pixel location within that layer. Pytorch provides an implementation of local response normalization:
 
 ```python
 nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75, k=2),  # hyper parameters from paper
@@ -143,13 +139,13 @@ nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75, k=2),  # hyper parameters 
 
 ### Optimizer
 
-The optimizer they used was SGD with momentum and weight decay. SGD uses a subset (batch) of the dataset to compute the
-gradient. This makes the gradient computation a bit noisy compared to using the whole dataset. This helps with
-generalization by exploring more of the cost function and helps escape local minima and saddle points. Momentum uses
-infinite smoothing or IIR filtering to make the trajectory and the gradient descent algorithm smoother. Weight decay is
-another way of saying L2 regularization. L2 regularization helps with over fitting by keeping the weights small, hence
-preventing any one path from dominating the prediction. Pytorch has a built-in Adam optimizer with built-in weight
-decay.
+The optimizer used was SGD with momentum and weight decay. SGD computes the gradient using a subset (batch) of the
+dataset rather than the entire dataset, which introduces some noise into the gradient computation. This noise aids in
+generalization by allowing the exploration of more of the cost function, and it helps avoid local minima and saddle
+points. Momentum employs infinite impulse response (IIR) filtering to smooth the trajectory of the gradient descent
+algorithm. Weight decay, also known as L2 regularization, helps prevent overfitting by keeping the weights small, thus
+avoiding any one path from dominating the prediction. PyTorch includes a built-in Adam optimizer that also supports
+weight decay.
 
 ```python
 torch.optim.AdamW(params=self.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
@@ -157,7 +153,7 @@ torch.optim.AdamW(params=self.parameters(), lr=LEARNING_RATE, weight_decay=WEIGH
 
 ### Implementation and Results
 
-These are the hyperparameters used for training:
+These were the hyperparameters used for training:
 
 ```python
 LEARNING_RATE = 0.0001
@@ -169,8 +165,9 @@ LEARNING_RATE_DECAY_STEP_SIZE = 2000
 WEIGHT_DECAY = 0.01
 ```
 
-The SGD optimizer mentioned above didn't train. I used an AdamW optimizer which scales the gradient by the RMS value
-before the update. Using this optimizer and the hyperparameters, I was able to achieve a 78% accuracy on the test data.
+The SGD optimizer mentioned earlier did not perform effectively in training. Instead, I switched to the AdamW optimizer,
+which scales the gradient by its RMS value before updating. Using this optimizer, along with the appropriate
+hyperparameters, I achieved a 78% accuracy on the test data.
 
 ```
 Epoch: 400 	Step: 14770 	Loss: 0.2250 	Acc: 93.75 %
@@ -283,18 +280,17 @@ nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu')
 
 ### Small Filters
 
-The receptive field of the CNN was reduced by employing smaller convolutional filters. Most of the filters in the
-network are 3x3. The intuition behind smaller filters in a deeper network was that the pace at which the feature
-dimensionality was reduced was done at a slower pace. This allowed for the network to learn a rich set of features for
-the image classification task. The smaller filters lend to smaller number of parameters compared to larger convolutional
-filters.
+The receptive field of the CNN was reduced by using smaller convolutional filters. Most of the filters in the network
+are 3x3. The rationale for employing smaller filters in a deeper network is that it reduces the feature dimensionality
+at a slower rate. This allows the network to learn a richer set of features for the image classification task.
+Additionally, smaller filters result in a reduced number of parameters compared to larger convolutional filters.
 
 ### Ensemble Methods
 
-Ensemble methods are machine learning techniques that combine multiple base models to improve predictive
-performance. The underlying idea is that by combining the predictions of multiple models, you can often achieve better
-results than any individual model alone. In the paper the authors combine the results of multiple trained networks with
-different configurations (different number of layers) to get better generalization on test data.
+Ensemble methods are machine learning techniques that improve predictive performance by combining multiple base models.
+The underlying idea is that the combined predictions of multiple models often yield better results than any single model
+alone. In the paper, the authors enhance generalization on test data by integrating the outcomes of several trained
+networks with various configurations, such as differing numbers of layers.
 
 ### Implementation and Results
 
@@ -328,7 +324,8 @@ Accuracy of the network on the 10000 test images: 85.73248291015625 %
 After VGG showed promising results, it was understood that deeper networks typically provide better performance.
 However, training deeper networks was challenging due to problems like vanishing and exploding gradients. Batch
 normalization and proper initialization of weights helped to some extent; however, solvers were still encountering
-convergence issues, and the deep networks were not performing optimally. The solution, proposed by He et al. in "Deep
+convergence issues, and the deep networks were not performing optimally. The solution, proposed in 2015 by He et al.
+in "Deep
 Residual Learning for Image Recognition," was to introduce skip connections, also known as residual connections, that
 pass the input directly to later layers. The structure is shown in the figure below. These residual connections enabled
 optimizers to converge more effectively and allowed for significantly deeper CNNs. As a result, ResNet32 could achieve
